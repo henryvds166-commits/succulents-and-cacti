@@ -1,0 +1,33 @@
+{
+  "format": "succulents-offline-explorer",
+  "version": 2,
+  "plants": [
+    {
+      "id": "sample-record-001",
+      "family": "Apocynaceae",
+      "scientificName": "Stapelia exampleii",
+      "genus": "Stapelia",
+      "siNumber": "",
+      "author": "",
+      "acceptedName": "",
+      "locality": "Replace this example with a verified source record.",
+      "notes": "Template record only. This is not a real taxon and must not be used as botanical information.",
+      "tagNumber": "S-000",
+      "floweringSeason": "Late summer to autumn",
+      "acquiredDate": "2026-01-01",
+      "acquiredFrom": "Example nursery"
+    }
+  ],
+  "treatments": [
+    {
+      "id": "sample-treatment-001",
+      "genus": "Stapelia",
+      "type": "Pest",
+      "issue": "Example: mealybug",
+      "product": "Example product",
+      "dateTreated": "2026-01-15",
+      "nextDue": "",
+      "notes": "Template entry only; replace with your own record."
+    }
+  ]
+}
