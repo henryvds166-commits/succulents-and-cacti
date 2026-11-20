@@ -49,16 +49,48 @@ function render(){renderBackupBanner();$('viewCards').classList.toggle('active',
 }
 $('plantGrid').addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.family-group')){if(d.open)closedFamilies.delete(d.dataset.family);else closedFamilies.add(d.dataset.family);}},true);
 $('familyFilter').onchange=render;
-let photoCleared=false;
+let photoCleared=false,cameraPhoto='';
 function setPhotoPreview(src){$('removePhoto').classList.toggle('hidden',!src);const i=$('photoPreview');if(src){i.src=src;i.classList.remove('hidden');}else{i.removeAttribute('src');i.classList.add('hidden');}}
-$('photo').onchange=async e=>{const f=e.target.files[0];if(f){photoCleared=false;setPhotoPreview(await fileToDataURL(f));}else setPhotoPreview(photoCleared?'':plants.find(p=>p.id===$('recordId').value)?.photo);};
+$('photo').onchange=async e=>{const f=e.target.files[0];if(f){photoCleared=false;cameraPhoto='';setPhotoPreview(await fileToDataURL(f));}else setPhotoPreview(photoCleared?'':(cameraPhoto||plants.find(p=>p.id===$('recordId').value)?.photo));};
 $('genus').addEventListener('input',()=>{const f=$('family');if(!f.value.trim()||f.dataset.auto==='1'){const s=suggestFamily($('genus').value);if(s){f.value=s;f.dataset.auto='1';}else if(f.dataset.auto==='1'){f.value='';}}});
 $('family').addEventListener('input',()=>{$('family').dataset.auto='';});
-$('removePhoto').onclick=()=>{photoCleared=true;$('photo').value='';setPhotoPreview('');};
-function openForm(p){photoCleared=false;$('recordForm').reset();$('recordId').value=p?.id||'';$('dialogTitle').textContent=p?'Edit plant record':'Add a plant';$('deleteRecord').classList.toggle('hidden',!p);$('scientificName').value=p?.scientificName||'';$('genus').value=p?.genus||'';$('family').value=p?.family||'';$('family').dataset.auto='';$('genusList').innerHTML=[...new Set([...(C.genera||[]),...plants.map(x=>x.genus).filter(Boolean)])].sort().map(g=>`<option value="${escapeHTML(g)}">`).join('');$('familyList').innerHTML=[...new Set([...Object.values(C.familyByGenus||{}),...plants.map(x=>x.family)].filter(Boolean))].sort().map(f=>`<option value="${escapeHTML(f)}">`).join('');$('acceptedName').value=p?.acceptedName||'';$('locality').value=p?.locality||'';$('tagNumber').value=p?.tagNumber||'';$('floweringSeason').value=p?.floweringSeason||'';$('acquiredDate').value=p?.acquiredDate||'';$('acquiredFrom').value=p?.acquiredFrom||'';$('notes').value=p?.notes||'';setPhotoPreview(p?.photo);resetTreatForm();renderDialogTreatments();$('recordDialog').showModal();}
+$('removePhoto').onclick=()=>{photoCleared=true;cameraPhoto='';$('photo').value='';setPhotoPreview('');};
+/* ---------- in-app camera (opens the phone or laptop camera directly) ---------- */
+let camStream=null,camFacing='environment';
+function useCameraPhoto(dataUrl){photoCleared=false;cameraPhoto=dataUrl;$('photo').value='';setPhotoPreview(dataUrl);}
+function stopCamera(){if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}$('camVideo').srcObject=null;$('camShoot').disabled=true;}
+function showCamErr(msg){const e=$('camErr');e.textContent=msg;e.classList.remove('hidden');$('camFallback').classList.remove('hidden');$('camShoot').disabled=true;}
+async function startCamera(){
+  stopCamera();$('camErr').classList.add('hidden');$('camFallback').classList.add('hidden');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){showCamErr('The live camera is not available here (it needs a secure https link). Use the button below to open your camera app instead.');return;}
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:camFacing},width:{ideal:1920},height:{ideal:1440}},audio:false});
+    const v=$('camVideo');v.srcObject=camStream;await v.play().catch(()=>{});
+    const front=(camStream.getVideoTracks()[0].getSettings().facingMode||camFacing)==='user';
+    v.classList.toggle('mirror',front);$('camShoot').disabled=false;
+    const cams=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+    $('camSwitch').classList.toggle('hidden',cams.length<2);
+  }catch(err){
+    const n=err&&err.name;
+    showCamErr(n==='NotAllowedError'||n==='SecurityError'?'Camera permission was blocked. Tap the lock icon next to the web address, allow Camera for this site, then tap Take photo again. Or use the button below.':n==='NotFoundError'||n==='OverconstrainedError'?'No camera was found on this device. You can choose a photo instead.':'The camera could not be started. Use the button below to open your camera app instead.');
+  }
+}
+$('takePhoto').onclick=()=>{$('cameraDialog').showModal();startCamera();};
+$('camShoot').onclick=()=>{
+  const v=$('camVideo');if(!v.videoWidth)return;
+  const s=Math.min(1,1200/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');
+  c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  useCameraPhoto(c.toDataURL('image/jpeg',.82));
+  const st=document.querySelector('.camstage');st.classList.add('flash');setTimeout(()=>{st.classList.remove('flash');$('cameraDialog').close();},160);
+};
+$('camSwitch').onclick=()=>{camFacing=camFacing==='environment'?'user':'environment';startCamera();};
+$('camDone').onclick=$('camClose').onclick=()=>$('cameraDialog').close();
+$('camNative').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f){useCameraPhoto(await fileToDataURL(f));$('cameraDialog').close();}};
+$('cameraDialog').addEventListener('close',stopCamera);
+function openForm(p){photoCleared=false;cameraPhoto='';$('recordForm').reset();$('recordId').value=p?.id||'';$('dialogTitle').textContent=p?'Edit plant record':'Add a plant';$('deleteRecord').classList.toggle('hidden',!p);$('scientificName').value=p?.scientificName||'';$('genus').value=p?.genus||'';$('family').value=p?.family||'';$('family').dataset.auto='';$('genusList').innerHTML=[...new Set([...(C.genera||[]),...plants.map(x=>x.genus).filter(Boolean)])].sort().map(g=>`<option value="${escapeHTML(g)}">`).join('');$('familyList').innerHTML=[...new Set([...Object.values(C.familyByGenus||{}),...plants.map(x=>x.family)].filter(Boolean))].sort().map(f=>`<option value="${escapeHTML(f)}">`).join('');$('acceptedName').value=p?.acceptedName||'';$('locality').value=p?.locality||'';$('tagNumber').value=p?.tagNumber||'';$('floweringSeason').value=p?.floweringSeason||'';$('acquiredDate').value=p?.acquiredDate||'';$('acquiredFrom').value=p?.acquiredFrom||'';$('notes').value=p?.notes||'';setPhotoPreview(p?.photo);resetTreatForm();renderDialogTreatments();$('recordDialog').showModal();}
 $('addRecord').onclick=()=>openForm();$('closeDialog').onclick=$('cancelDialog').onclick=()=>$('recordDialog').close();$('search').oninput=render;$('genusFilter').onchange=render;$('favouritesOnly').onclick=()=>{favouritesOnly=!favouritesOnly;$('favouritesOnly').classList.toggle('primary',favouritesOnly);$('favouritesOnly').classList.toggle('secondary',!favouritesOnly);render();};
 $('plantGrid').onclick=async e=>{const edit=e.target.closest('[data-edit]'),fav=e.target.closest('[data-fav]');if(edit){openForm(plants.find(p=>p.id===edit.dataset.edit));}if(fav){const p=plants.find(x=>x.id===fav.dataset.fav);p.favourite=!p.favourite;await saveRecord(p);plants=await allRecords();render();}};
-$('recordForm').onsubmit=async e=>{e.preventDefault();const id=$('recordId').value||crypto.randomUUID();const previous=plants.find(p=>p.id===id)||{};let photo=photoCleared?'':(previous.photo||'');const file=$('photo').files[0];if(file)photo=await fileToDataURL(file);const tag=$('tagNumber').value.trim();const clash=tag&&plants.find(p=>p.id!==id&&(p.tagNumber||'').toLowerCase()===tag.toLowerCase());if(clash&&!confirm(`Tag ${tag} is already used by ${clash.scientificName}. Save anyway?`))return;const record={...previous,id,scientificName:$('scientificName').value.trim(),family:$('family').value.trim()||suggestFamily($('genus').value),genus:$('genus').value.trim(),acceptedName:$('acceptedName').value.trim(),locality:$('locality').value.trim(),tagNumber:tag,floweringSeason:$('floweringSeason').value.trim(),acquiredDate:$('acquiredDate').value,acquiredFrom:$('acquiredFrom').value.trim(),notes:$('notes').value.trim(),photo,demo:false,starter:false};await saveRecord(record);plants=await allRecords();$('recordDialog').close();render();};
+$('recordForm').onsubmit=async e=>{e.preventDefault();const id=$('recordId').value||crypto.randomUUID();const previous=plants.find(p=>p.id===id)||{};let photo=photoCleared?'':(previous.photo||'');const file=$('photo').files[0];if(file)photo=await fileToDataURL(file);if(cameraPhoto)photo=cameraPhoto;const tag=$('tagNumber').value.trim();const clash=tag&&plants.find(p=>p.id!==id&&(p.tagNumber||'').toLowerCase()===tag.toLowerCase());if(clash&&!confirm(`Tag ${tag} is already used by ${clash.scientificName}. Save anyway?`))return;const record={...previous,id,scientificName:$('scientificName').value.trim(),family:$('family').value.trim()||suggestFamily($('genus').value),genus:$('genus').value.trim(),acceptedName:$('acceptedName').value.trim(),locality:$('locality').value.trim(),tagNumber:tag,floweringSeason:$('floweringSeason').value.trim(),acquiredDate:$('acquiredDate').value,acquiredFrom:$('acquiredFrom').value.trim(),notes:$('notes').value.trim(),photo,demo:false,starter:false};await saveRecord(record);plants=await allRecords();$('recordDialog').close();render();};
 function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1200/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.82));};img.onerror=()=>resolve(r.result);img.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});}
 $('deleteRecord').onclick=async()=>{const id=$('recordId').value;if(id&&confirm('Delete this plant record from this device?')){const old=plants.find(p=>p.id===id);await deleteRecord(id);plants=await allRecords();$('recordDialog').close();render();toast('Plant deleted',async()=>{await saveRecord(old);plants=await allRecords();render();});}};
 $('exportData').onclick=()=>{const blob=new Blob([JSON.stringify({format:C.exportFormat,version:2,exportedAt:new Date().toISOString(),plants,treatments},null,2)],{type:'application/json'});download(blob,C.backupFile);markBackup();};

@@ -24,6 +24,9 @@ An offline-first, installable web app for Windows and Android. Records are store
 JSON: array, `{ "plants": [...], "treatments": [...] }` or `{ "records": [...] }`. Plant fields: `id`, `family`, `scientificName` (or `name`), `genus`, `acceptedName`, `locality`, `tagNumber`, `floweringSeason`, `acquiredDate` (YYYY-MM-DD), `acquiredFrom`, `notes`, optional `photo` data URL.
 CSV header example: `family,scientificName,genus,acceptedName,locality,tagNumber,floweringSeason,acquiredDate,acquiredFrom,notes`.
 
+## Photos
+In *Add a plant* / *Edit plant*, use **Take photo with camera** to open a live camera view (allow Camera access when your browser asks, and use **Switch camera** to change between back and front), or **Choose file** to pick an existing photo. If the live camera cannot start, the app offers to open your phone's camera app instead.
+
 ## Offline support
 The app now has a working offline cache (`sw.js`). Open the hosted link once while online, then install it; after that it opens without internet. When you change any file, raise `VERSION` in `sw.js` so installed copies update.
 

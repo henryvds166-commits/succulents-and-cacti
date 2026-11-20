@@ -64,7 +64,7 @@
 <label>Date acquired<input id="acquiredDate" type="date"></label>
 <label>Acquired from<input id="acquiredFrom" placeholder="Person, nursery or supplier"></label>
 <label class="wide">Cultivation and research notes<textarea id="notes" rows="3"></textarea></label>
-<label class="wide">Photograph<img id="photoPreview" class="photo-preview hidden" alt="Plant photo preview"><input id="photo" type="file" accept="image/*"><button type="button" id="removePhoto" class="smallbtn hidden">Remove photo</button><small>Photos are resized to save space and stored on this device.</small></label>
+<label class="wide">Photograph<img id="photoPreview" class="photo-preview hidden" alt="Plant photo preview"><input id="photo" type="file" accept="image/*"><button type="button" id="takePhoto" class="smallbtn">&#128247; Take photo with camera</button><button type="button" id="removePhoto" class="smallbtn hidden">Remove photo</button><small>Photos are resized to save space and stored on this device.</small></label>
 </div>
 <div class="treatbox" id="treatBox"><div class="treathead"><div><p class="eyebrow">PLANT HEALTH</p><h3>Pest &amp; fungus treatments</h3><small id="treatGenusLabel"></small></div></div>
 <div id="treatmentList" class="treat-list"></div>
@@ -80,6 +80,17 @@
 <small class="treatnote">Treatments save immediately and are shared by all plants in the same genus.</small></div></div>
 <div class="dialogactions"><button type="button" id="deleteRecord" class="btn danger hidden">Delete record</button><span></span><button type="button" id="cancelDialog" class="btn secondary">Cancel</button><button type="submit" class="btn primary">Save record</button></div></form></dialog>
 <div id="toast" class="toast hidden"><span id="toastMsg"></span><button id="toastUndo" class="smallbtn">Undo</button></div>
+<dialog id="cameraDialog" class="cameradlg">
+ <div class="camhead"><strong>Take photo</strong><button type="button" class="camclose" id="camClose" aria-label="Close camera">&times;</button></div>
+ <div class="camstage"><video id="camVideo" playsinline muted autoplay></video><div class="camerr hidden" id="camErr"></div></div>
+ <div class="camfallback hidden" id="camFallback"><label class="btn secondary camfile">Open my camera app instead<input id="camNative" type="file" accept="image/*" capture="environment"></label></div>
+ <div class="camactions">
+  <button type="button" class="btn secondary hidden" id="camSwitch">&#8635; Switch camera</button>
+  <button type="button" class="btn primary camshutter" id="camShoot" disabled>&#9679; Capture</button>
+  <button type="button" class="btn secondary" id="camDone">Cancel</button>
+ </div>
+</dialog>
+
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body></html>

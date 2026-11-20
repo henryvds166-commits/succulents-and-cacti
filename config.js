@@ -4,7 +4,7 @@ window.COLLECTION={
  "short": "Succulents & Cacti",
  "tagline": "OFFLINE EXPLORER",
  "hero": "Your succulent and cactus library,<br>wherever you are.",
- "footer": "Succulents & Cacti Offline Explorer · Version 1",
+ "footer": "Succulents & Cacti Offline Explorer · Version 2",
  "disclaimer": "Independent project",
  "copyright": "© 2026 Henry van der Schyff. All rights reserved.",
  "dbName": "stapeliads-explorer",
